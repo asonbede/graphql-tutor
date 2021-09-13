@@ -1,4 +1,5 @@
-const { AuthenticationError } = require("apollo-server");
+const { authenticationError,UserInputError } = require("apollo-server");
+const { argsToArgsConfig } = require("graphql/type/definition");
 const { create } = require("../../models/post");
 const Post = require("../../models/post");
 const checkAuth = require("../../util/check-auth");
@@ -28,7 +29,10 @@ module.exports = {
   Mutation: {
     async createPost(_, { body }, context) {
       const user = checkAuth(context);
-      console.log({ user });
+      if (args.body.trim()==="") {
+        throw new Error("Post body must not be empty")
+      }
+      //console.log({ user });
       const newPost = new Post({
         body,
         user: user.id,
@@ -52,5 +56,29 @@ module.exports = {
         throw new Error(err);
       }
     },
+    async likePost(_,{postId},context){
+      const {username} = checkAuth(context)
+      const post = await Post.findById(postId)
+      if (post) {
+        if (post.likes.find(like=>like.username===username)) {
+          //already liked
+          post.likes= post.likes.filter(like=>like.username !== username)
+          //await post.save()
+        }else{
+           //not liked, like post
+        post.likes.push({
+          username,
+          createdAt: new Date().toISOString()
+        })
+
+        }
+        await post.save()
+        return post
+      } else {
+       throw new UserInputError("Post not found")
+
+      }
+     
+    }
   },
 };
