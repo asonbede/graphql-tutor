@@ -53,8 +53,8 @@ module.exports = {
     ) {
       //todos validate users data
       const { valid, errors } = validateRegisterInput(
-        email,
         username,
+        email,
         password,
         confirmPassword
       );
